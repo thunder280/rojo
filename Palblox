@@ -1,0 +1,209 @@
+local ReplicatedStorage = game:
+
+GetService("ReplicatedStorage")local 
+
+Players = game:GetService("Players")
+
+-- Folders in ReplicatedStoragelocal 
+
+Pals = Instance.new("Folder")Pals.Name = "
+
+Pals"
+
+Pals.Parent = ReplicatedStorage
+
+local Eggs = Instance.new("Folder")
+
+Eggs.Name = "Eggs"
+
+Eggs.Parent = ReplicatedStorage
+
+-- Remote Events Setup
+
+local RemoteEvents = Instance.new("
+
+Folder")RemoteEvents.Name = "RemoteEvents"
+
+RemoteEvents.Parent = 
+
+ReplicatedStorage
+
+local CapturePalEvent = Instance.new
+
+("RemoteEvent")CapturePalEvent.Name = "
+
+CapturePal"CapturePalEvent.Parent = 
+
+RemoteEvents
+
+local SummonPalEvent = Instance.new("
+
+RemoteEvent")SummonPalEvent.Name = "SummonPal"SummonPalEvent.Parent = 
+
+RemoteEvents
+
+local HatchPalEggEvent = Instance.
+
+new("RemoteEvent")HatchPalEggEvent.Name = 
+
+"HatchPalEgg"HatchPalEggEvent.Parent = 
+
+RemoteEvents
+
+-- Capture System Table
+
+local capturedPalsByPlayer = {}
+
+-- Helper: Ensure Player Table
+
+local function ensurePlayerTable
+
+(player)
+
+    if not capturedPalsByPlayer
+
+[player.UserId] then        
+
+capturedPalsByPlayer[player.UserId] = {}  
+
+  endend
+
+-- Function to Capture Pal
+
+local function capturePal(player)    
+
+ensurePlayerTable(player)
+
+    local availablePals = Pals:
+
+GetChildren()    if #availablePals == 0 
+
+then return end
+
+    local pal = availablePals[math.
+
+random(1, #availablePals)]if not capturedPalsByPlayer
+
+[player.UserId][pal.Name] then        
+
+capturedPalsByPlayer[player.UserId][pal.
+
+Name] = true        print("Captured: " .. 
+
+pal.Name)
+
+        CapturePalEvent:FireClient
+
+(player, pal.Name)    else
+
+        print("Already Captured: " ..
+
+ pal.Name)    endend
+
+-- Function to Summon Pal
+
+local function summonPal(player)
+
+    local character = player.
+
+Character or player.CharacterAdded:Wait()
+
+    local availablePals = Pals:GetChildren
+
+()    if #availablePals == 0 then return 
+
+end    local pal = availablePals[math.
+
+random(1, #availablePals)]
+
+    if not character:FindFirstChild
+
+(pal.Name) then        local clone = pal:Clone()    
+
+    clone.Parent = character
+
+        print("Summoned: " .. clone.
+
+Name)
+
+        SummonPalEvent:FireClient
+
+(player, clone.Name)    elseprint("Already Summoned: " ..
+
+ pal.Name)    endend
+
+-- Function to Hatch Pal Egg
+
+local function hatchPalEgg(player)
+
+    local character = player.
+
+Character or player.CharacterAdded:Wait()
+
+    local availableEggs = Eggs:GetChildren
+
+()    if #availableEggs == 0 then return 
+
+end    local egg = availableEggs[math.
+
+random(1, #availableEggs)]
+
+    if not character:FindFirstChild
+
+(egg.Name) then        local hatched = 
+
+egg:Clone()        hatched.Parent = 
+
+character        print("Hatched: " .. 
+
+hatched.Name)
+
+        HatchPalEggEvent:FireClient
+
+(player, hatched.Name)    else
+
+        print("Already Hatched: " .. 
+
+egg.Name)    endend
+
+-- Bind Events
+
+CapturePalEvent.OnServerEvent:
+
+Connect(capturePal)SummonPalEvent.
+
+OnServerEvent:Connect(summonPal)
+
+HatchPalEggEvent.OnServerEvent:Connect
+
+(hatchPalEgg)-- Optional: Cleanup on Leave
+
+Players.PlayerRemoving:Connect
+
+(function(player)    capturedPalsByPlayer
+
+[player.UserId] = nilend)
+
+-- CLIENT SCRIPT SHOULD:
+
+-- Listen for CapturePal, SummonPal, 
+
+and HatchPalEgg events-- Show UI feedback 
+
+(TextLabels or Notification frames)-- 
+
+Send requests to these events from GUI 
+
+buttons-- Example GUI Button Code (Client-
+
+Side LocalScript):-- game.
+
+ReplicatedStorage.RemoteEvents.CapturePal:
+
+FireServer()-- game.ReplicatedStorage.
+
+RemoteEvents.SummonPal:FireServer()-- 
+
+game.ReplicatedStorage.RemoteEvents.
+
+HatchPalEgg:FireServer()
